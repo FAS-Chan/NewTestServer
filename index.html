@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Logger</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h2>Data Logging Dashboard</h2>
+    
+    <input type="number" id="dataInput" placeholder="Enter Value">
+    <button onclick="sendData()">Log Data</button>
+
+    <div style="width: 600px;"><canvas id="myChart"></canvas></div>
+
+    <script>
+        // Initialize Chart
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Live Value', data: [], borderColor: 'blue' }] }
+        });
+
+        // Function to send data to MySQL
+        function sendData() {
+            let val = document.getElementById('dataInput').value;
+            fetch('save_data.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'value=' + val
+            });
+        }
+
+        // AJAX Polling for Real-Time UI (Every 2 seconds)
+        async function updateChart() {
+            const res = await fetch('fetch_data.php');
+            const logs = await res.json();
+            
+            chart.data.labels = logs.map(l => l.recorded_at);
+            chart.data.datasets[0].data = logs.map(l => l.reading_value);
+            chart.update();
+        }
+
+        setInterval(updateChart, 2000); 
+    </script>
+</body>
+</html>
